@@ -1,6 +1,7 @@
 from aes128 import AES as AES_128
 from aes192 import AES as AES_192
 from aes256 import AES as AES_256
+from aes512 import AES as AES_512
 
 
 msg = 'Checking AES Encryption & Decryption on python'
@@ -30,5 +31,14 @@ key = 'Thats my Kung Fu Panda ! Style12'    # 32 character / 256 bits
 encrypt_256 = AES_256()
 x = encrypt_256.encrypt(key, msg, encode)
 y = encrypt_256.decrypt(key, x['hex'])
+print(x)
+print(y, end='\n\n')
+
+
+print('AES 512')
+key = 'Thats my Kung Fu Panda ! Style12Thats my Kung Fu Panda ! Style12'    # 64 character / 512 bits
+encrypt_512 = AES_512()
+x = encrypt_512.encrypt(key, msg, encode)
+y = encrypt_512.decrypt(key, x['hex'])
 print(x)
 print(y, end='\n\n')
