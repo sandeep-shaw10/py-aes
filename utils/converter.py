@@ -1,6 +1,8 @@
 import numpy as np
 from utils.constant import s_box, roundConstant, encryptMDS, mc2, mc3
 from utils.constant import invs_box, decryptMDS, mc9, mc11, mc13, mc14
+# aes512
+from utils.constant import roundConstant_8, encryptMDS_8, decryptMDS_8
 
 
 # Key to Matrix
@@ -37,7 +39,7 @@ def arrayInvSbox(arr):
 
 
 # XOR Operation on [arr1, arr2] or [arr1,arr2,rcon(i)]
-def xorArray(arr1, arr2, rcon=-1):
+def xorArray(arr1, arr2, order=4, rcon=-1):
     xor_arr = []
     if(arr1.shape == arr2.shape and (rcon >= -1 and rcon <= 9)):
         if(rcon == -1):
@@ -46,6 +48,8 @@ def xorArray(arr1, arr2, rcon=-1):
                 xor_arr.append(val)
         else:
             rcon_arr = roundConstant[rcon]
+            if(order == 8):
+                rcon_arr = roundConstant_8[rcon]
             for i in range(len(arr1)):
                 val = arr1[i] ^ arr2[i] ^ rcon_arr[i]
                 xor_arr.append(val)
@@ -89,43 +93,56 @@ def shiftRow(arr, left=True, order=4):
 def mixColumn(arr, order=4):
     arr = np.transpose(arr)
     mix_arr = np.zeros((order, order), dtype=int)
+    encryptMDS_arr = encryptMDS
+    if(order == 8):
+        encryptMDS_arr = encryptMDS_8
     for i in range(0, order):
         for j in range(0, order):
             for k in range(0, order):
-                if(encryptMDS[i][k] == 1):
+                if(encryptMDS_arr[i][k] == 1):
                     mix_arr[i][j] ^= arr[k][j]
                 lsb = arr[k][j] & 0b00001111
                 msb = (arr[k][j] & 0b11110000) >> 4
-                if(encryptMDS[i][k] == 2):
+                if(encryptMDS_arr[i][k] == 2):
                     mix_arr[i][j] ^= mc2[msb,lsb]
-                if(encryptMDS[i][k] == 3):
+                if(encryptMDS_arr[i][k] == 3):
                     mix_arr[i][j] ^= mc3[msb,lsb]
     return np.transpose(mix_arr)
 
 
 # Inverse Mix Column
 def inverseMixColumn(arr, order=4):
+    decryptMDS_arr = decryptMDS
+    if(order == 8):
+        decryptMDS_arr = decryptMDS_8
     arr = np.transpose(arr)
     mix_arr = np.zeros((order, order), dtype=int)
     for i in range(0, order):
         for j in range(0, order):
             for k in range(0, order):
+                if(decryptMDS_arr[i][k] == 1):
+                    mix_arr[i][j] ^= arr[k][j]
                 lsb = arr[k][j] & 0b00001111
                 msb = (arr[k][j] & 0b11110000) >> 4
-                if(decryptMDS[i][k] == 9):
+                if(decryptMDS_arr[i][k] == 9):
                     mix_arr[i][j] ^= mc9[msb,lsb]
-                if(decryptMDS[i][k] == 11):
+                if(decryptMDS_arr[i][k] == 11):
                     mix_arr[i][j] ^= mc11[msb,lsb]
-                if(decryptMDS[i][k] == 13):
+                if(decryptMDS_arr[i][k] == 13):
                     mix_arr[i][j] ^= mc13[msb,lsb]
-                if(decryptMDS[i][k] == 14):
+                if(decryptMDS_arr[i][k] == 14):
                     mix_arr[i][j] ^= mc14[msb,lsb]
     return np.transpose(mix_arr)
 
 
 
 # Decryption: ecrypted hex to matrix
-def hexToMatrix(data, order=4, hexbit=32):
+'''
+4*4: 16 box => 128 bits => 32 in hex (representation)
+8*8: 64 box => 512 bits => 128 in hex (representation)
+'''
+def hexToMatrix(data, order=4):
+    hexbit = order*order*2          
     if(len(data) == hexbit):
         val = [data[i:i+2] for i in range(0, len(data), 2)]
         val = [int(x,16) for x in val]
