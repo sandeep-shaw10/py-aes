@@ -159,7 +159,7 @@ if(__name__ == '__main__'):
 
     aes256 = AES()
 
-    key = 'Thats my Kung Fu'
+    key = 'Thats my Kung Fu1234567876543210'
     msg = 'Checking AES 256 on Python'
     encode = '__all__'      # hex, b64 => base64, 0b => binary
 
